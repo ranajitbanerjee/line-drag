@@ -109,6 +109,7 @@ let nextIndex,
     mouseVector = {},
     currPos;
 
+let path = svg.append('path').attr('d', d3.line().x(d => d.x).y(d => d.y)(points));
 // Create the circles
 svg.selectAll('circle').data(points).enter().append('circle')
 .each(function (d) {
@@ -121,14 +122,12 @@ svg.selectAll('circle').data(points).enter().append('circle')
     .attr('cx', d.x)
     .attr('cy', d.y);
     currentIndex = i;
-    mouseVector.x = d.x;
-    mouseVector.y = d.y;
 });
 
 let checkBothDirection,
     direction;
 
-let onDrag = () => {
+let onDrag = function () {
     nextIndex = Math.min(currentIndex + 1, points.length - 1);
     prevIndex = Math.max(currentIndex - 1, 0);
 
@@ -136,13 +135,16 @@ let onDrag = () => {
     let nextPoint = points[nextIndex];
     let prevPoint = points[prevIndex];
     let index = Math.max(Math.min(currentIndex, points.length - 1), 0);
+    let tracker = d3.select(this);
+    let currPos = {
+        x: Number(tracker.attr('cx')),
+        y: Number(tracker.attr('cy'))
+    };
 
-    if (currPos && currPos.x === currentPoint.x && currPos && currPos.y === currentPoint.y) {
+    if (currPos.x === currentPoint.x && currPos.y === currentPoint.y) {
         mouseVector.x = points[index].x;
         mouseVector.y = points[index].y;
     }
-
-    currPos = currPos || currentPoint;
 
     mouseVector.x += d3.event.dx;
     mouseVector.y += d3.event.dy;
@@ -151,7 +153,6 @@ let onDrag = () => {
 
     let interp,
         value;
-
     if (checkBothDirection) {
         let interpNext = getInterpolatedValue(currentPoint, nextPoint, mouseVector);
         let interpPrev = getInterpolatedValue(currentPoint, prevPoint, mouseVector);
@@ -174,6 +175,7 @@ let onDrag = () => {
         value = interp.value;
     }
 
+console.log(direction);
     if (value.x === nextPoint.x && value.y === nextPoint.y) {
         currentIndex = nextIndex;
     }
@@ -181,15 +183,8 @@ let onDrag = () => {
         currentIndex = prevIndex;
     }
 
-    currPos = {
-        x: value.x,
-        y: value.y
-    };
-
     updateTrackerCircle(value);
 };
-
-let path = svg.append('path').attr('d', d3.line().x(d => d.x).y(d => d.y)(points));
 
 d3.select('svg').append('circle')
 .attr('r', 5)
